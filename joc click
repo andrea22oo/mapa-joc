@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Joc interactiu: Situa els elements!</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 100vh;
+        }
+        .game-panel {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="game-panel">
+        <p id="current-item">Comencem!</p>
+    </div>
+    <script>
+        // Crear el mapa
+        const map = L.map('map').setView([10, -60], 3); // Centrat a Amèrica
+
+        // Afegir capa base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Llista d'elements (tots els del mapa original)
+        const elements = [
+            { type: 'line', coordinates: [[35.15, -90.05], [29.95, -90.07]], color: 'blue', name: 'Mississipi' },
+            { type: 'line', coordinates: [[47.5, -101], [40, -90]], color: 'blue', name: 'Missouri' },
+            { type: 'line', coordinates: [[53.5, -122], [50, -120]], color: 'blue', name: 'Columbia' },
+            { type: 'line', coordinates: [[38.5, -105], [32, -114]], color: 'blue', name: 'Colorado' },
+            { type: 'line', coordinates: [[66.5, -150], [64, -140]], color: 'blue', name: 'Yukon' },
+            { type: 'line', coordinates: [[32, -105], [26, -97]], color: 'blue', name: 'Rio Grande' },
+            { type: 'line', coordinates: [[-3, -60], [-6, -50]], color: 'blue', name: 'Amazonas' },
+            { type: 'line', coordinates: [[7, -67], [9, -61]], color: 'blue', name: 'Orinoco' },
+            { type: 'line', coordinates: [[-20, -58], [-27, -58]], color: 'blue', name: 'Paranà-Paraguai' },
+            { type: 'line', coordinates: [[-35, -58], [-36, -56]], color: 'blue', name: 'Riu de la Plata' },
+            { type: 'point', coordinates: [47.7, -87.5], color: 'blue', name: 'Llac Superior' },
+            { type: 'point', coordinates: [44.7, -82.5], color: 'blue', name: 'Llac Huron' },
+            { type: 'point', coordinates: [44, -86], color: 'blue', name: 'Llac Michigan' },
+            { type: 'point', coordinates: [51, -97], color: 'blue', name: 'Llac Winnipeg' },
+            { type: 'point', coordinates: [44, -78], color: 'blue', name: 'Llac Ontario' },
+            { type: 'point', coordinates: [12.5, -85], color: 'blue', name: 'Llac de Nicaragua' },
+            { type: 'point', coordinates: [-15.5, -69], color: 'blue', name: 'Llac Titicaca' },
+            { type: 'polygon', coordinates: [[39, -106], [42, -115], [50, -120]], color: 'brown', name: 'Muntanyes Rocalloses' },
+            { type: 'polygon', coordinates: [[35, -82], [37, -80]], color: 'brown', name: 'Serralada dels Apalatxes' },
+            { type: 'point', coordinates: [63, -151], color: 'brown', name: 'Mont McKinley' },
+            { type: 'polygon', coordinates: [[21, -100], [25, -99]], color: 'brown', name: 'Serra Mare Oriental' },
+            { type: 'polygon', coordinates: [[23, -103], [29, -105]], color: 'brown', name: 'Serra Mare Occidental' },
+            { type: 'polygon', coordinates: [[62, -129], [65, -135]], color: 'brown', name: 'Munts Mackenzie' },
+            { type: 'polygon', coordinates: [[68, -155], [70, -160]], color: 'brown', name: 'Serra de Brooks' },
+            { type: 'polygon', coordinates: [[-10, -76], [-15, -75], [-20, -65]], color: 'brown', name: 'Serralada dels Andes' },
+            { type: 'polygon', coordinates: [[-5, -60], [1, -55]], color: 'brown', name: 'Massís de la Guaiana' },
+            { type: 'point', coordinates: [-32.6, -70], color: 'brown', name: 'Aconcagua' },
+            { type: 'polygon', coordinates: [[21.5, -89], [20, -90]], color: 'orange', name: 'Península de Yucatán' },
+            { type: 'polygon', coordinates: [[25, -81], [28, -82]], color: 'orange', name: 'Península de Florida' },
+            { type: 'polygon', coordinates: [[33, -117], [36, -121]], color: 'orange', name: 'Península de Califòrnia' },
+            { type: 'polygon', coordinates: [[53, -63], [56, -60]], color: 'orange', name: 'Península de Labrador' },
+            { type: 'polygon', coordinates: [[60, -150], [63, -160]], color: 'orange', name: 'Península d\'Alaska' },
+            { type: 'point', coordinates: [25, -90], color: 'purple', name: 'Golf de Mèxic' },
+            { type: 'point', coordinates: [60, -85], color: 'purple', name: 'Badia de Hudson' },
+            { type: 'point', coordinates: [58, -137], color: 'purple', name: 'Golf d\'Alaska' },
+            { type: 'point', coordinates: [70, -60], color: 'purple', name: 'Badia de Baffin' },
+            { type: 'point', coordinates: [49, -65], color: 'purple', name: 'Golf de Sant Llorenç' },
+            { type: 'point', coordinates: [35, -75], color: 'purple', name: 'Cap Hatteras' },
+            { type: 'point', coordinates: [-5, -35], color: 'purple', name: 'Cap Sant Roque' },
+            { type: 'point', coordinates: [-55, -67], color: 'purple', name: 'Cap d\'Hornos' },
+            { type: 'point', coordinates: [-23, -43], color: 'purple', name: 'Cap Sao Tomé' },
+            { type: 'line', coordinates: [[-53, -74], [-52, -71]], color: 'purple', name: 'Estret de Magallanes' },
+            { type: 'line', coordinates: [[24, -82], [25, -80]], color: 'purple', name: 'Estret de Florida' },
+            { type: 'point', coordinates: [-1, -90], color: 'red', name: 'Arxipèlag de Galápagos' },
+            { type: 'point', coordinates: [-51.7, -59.4], color: 'red', name: 'Illes Malvines/Falkland' },
+            { type: 'polygon', coordinates: [[-3, -62], [-10, -55]], color: 'yellow', name: 'Plana Amazònica' },
+            { type: 'polygon', coordinates: [[-15, -48], [-20, -43]], color: 'yellow', name: 'Altiplà Brasiler' },
+            { type: 'polygon', coordinates: [[-35, -63], [-37, -58]], color: 'yellow', name: 'La Pampa' },
+            { type: 'polygon', coordinates: [[40, -100], [50, -95]], color: 'yellow', name: 'Gran Plana Central' },
+            { type: 'polygon', coordinates: [[50, -80], [60, -75]], color: 'yellow', name: 'Escut Canadenc' }
+        ];
+
+        // Variables de joc
+        let remaining = [...elements]; // Elements pendents
+        let currentItem = null; // Element actual
+
+        // Seleccionar un element a l'atzar
+        const seleccionarElement = () => {
+            if (remaining.length === 0) {
+                document.getElementById('current-item').textContent = 'Molt bé! Has acabat!';
+                return;
+            }
+            const index = Math.floor(Math.random() * remaining.length);
+            currentItem = remaining[index];
+            document.getElementById('current-item').textContent = `Troba: ${currentItem.name}`;
+        };
+
+        // Afegir elements al mapa
+        elements.forEach(element => {
+            const options = element.type === 'polygon' ? { color: element.color, fillColor: element.color, fillOpacity: 0.5 } :
+                            element.type === 'line' ? { color: element.color, weight: 4 } :
+                            { color: element.color, radius: 8 };
+
+            const mapElement = element.type === 'polygon' ? L.polygon(element.coordinates, options) :
+                               element.type === 'line' ? L.polyline(element.coordinates, options) :
+                               L.circleMarker(element.coordinates, options);
+
+            mapElement.addTo(map).on('click', () => {
+                if (currentItem && currentItem.name === element.name) {
+                    alert(`Correcte! Has trobat: ${element.name}`);
+                    mapElement.setStyle({ fillColor: 'green', color: 'green' }); // Canvia a verd
+                    remaining = remaining.filter(e => e.name !== element.name); // Elimina de pendents
+                    seleccionarElement(); // Nou element
+                } else {
+                    alert('Incorrecte. Torna-ho a intentar!');
+                }
+            });
+        });
+
+        // Començar el joc
+        seleccionarElement();
+    </script>
+</body>
+</html>
